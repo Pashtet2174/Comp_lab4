@@ -12,8 +12,7 @@ namespace Comp_Lab1
         HslColor
     }
 
-    // Класс для хранения информации о найденном совпадении
-    public virtual class RegexMatchResult
+    public class RegexMatchResult
     {
         public string Value { get; set; }
         public int Line { get; set; }
@@ -23,7 +22,6 @@ namespace Comp_Lab1
 
     public class RegexAnalyzer
     {
-        // Оставляем Regex только для целых чисел (1 блок)
         private readonly Regex _intRegex = new Regex(@"(?<!\w)[+-]?\d+(?!\w)", RegexOptions.Compiled);
 
         public List<RegexMatchResult> FindMatches(string text, SearchPatternType patternType)
@@ -39,7 +37,6 @@ namespace Comp_Lab1
 
                 if (patternType == SearchPatternType.IntegerNumber)
                 {
-                    // Стандартный поиск через Regex для чисел
                     foreach (Match match in _intRegex.Matches(currentLine))
                     {
                         results.Add(CreateResult(match.Value, i + 1, match.Index + 1, match.Length));
@@ -47,7 +44,6 @@ namespace Comp_Lab1
                 }
                 else
                 {
-                    // Поиск через Конечный Автомат (FSM) для ФИО и HSL
                     int j = 0;
                     while (j < currentLine.Length)
                     {
@@ -66,7 +62,7 @@ namespace Comp_Lab1
                                 j + 1, 
                                 matchLength
                             ));
-                            j += matchLength; // Пропускаем найденное
+                            j += matchLength; 
                         }
                         else
                         {
@@ -94,37 +90,37 @@ namespace Comp_Lab1
                 char c = text[i];
                 switch (state)
                 {
-                    case 0: // Ожидаем 1-ю заглавную букву
+                    case 0: 
                         if (char.IsUpper(c)) state = 1; else return 0;
                         break;
-                    case 1: // Точка после первого инициала
+                    case 1: 
                         if (c == '.') state = 2; else return 0;
                         break;
-                    case 2: // Пробел или сразу 2-я заглавная
+                    case 2: 
                         if (char.IsWhiteSpace(c)) state = 3;
                         else if (char.IsUpper(c)) state = 4;
                         else return 0;
                         break;
-                    case 3: // Строго 2-я заглавная после пробела
+                    case 3: 
                         if (char.IsUpper(c)) state = 4; else return 0;
                         break;
-                    case 4: // Точка после второго инициала
+                    case 4: 
                         if (c == '.') state = 5; else return 0;
                         break;
-                    case 5: // Пробел или сразу заглавная Фамилии
+                    case 5: 
                         if (char.IsWhiteSpace(c)) state = 6;
                         else if (char.IsUpper(c)) state = 7;
                         else return 0;
                         break;
-                    case 6: // Строго заглавная фамилии
+                    case 6: 
                         if (char.IsUpper(c)) state = 7; else return 0;
                         break;
-                    case 7: // Первая строчная фамилии
+                    case 7: 
                         if (char.IsLower(c)) state = 8; else return 0;
                         break;
-                    case 8: // Остальные строчные фамилии (цикл)
+                    case 8: 
                         if (char.IsLower(c)) state = 8;
-                        else return (i - start); // Успех, встретили не букву
+                        else return (i - start); 
                         break;
                 }
                 i++;
@@ -150,25 +146,25 @@ namespace Comp_Lab1
                     case 1: if (low == 's') state = 2; else return 0; break;
                     case 2: if (low == 'l') state = 3; else return 0; break;
                     case 3: if (c == '(') state = 4; else return 0; break;
-                    case 4: // Первая цифра H
+                    case 4: 
                         if (char.IsDigit(c)) { digits = 1; state = 5; } else return 0; break;
-                    case 5: // Цифры H или запятая
+                    case 5: 
                         if (char.IsDigit(c)) { if (++digits > 3) return 0; }
                         else if (c == ',') state = 6; else return 0; break;
-                    case 6: // Пробелы или цифра S
+                    case 6: 
                         if (char.IsWhiteSpace(c)) break;
                         if (char.IsDigit(c)) { digits = 1; state = 7; } else return 0; break;
-                    case 7: // Цифры S или %
+                    case 7: 
                         if (char.IsDigit(c)) { if (++digits > 3) return 0; }
                         else if (c == '%') state = 8; else return 0; break;
                     case 8: if (c == ',') state = 9; else return 0; break;
-                    case 9: // Пробелы или цифра L
+                    case 9: 
                         if (char.IsWhiteSpace(c)) break;
                         if (char.IsDigit(c)) { digits = 1; state = 10; } else return 0; break;
-                    case 10: // Цифры L или %
+                    case 10: 
                         if (char.IsDigit(c)) { if (++digits > 3) return 0; }
                         else if (c == '%') state = 11; else return 0; break;
-                    case 11: // Финальная скобка
+                    case 11: 
                         if (c == ')') return (i - start + 1); else return 0;
                 }
                 i++;
